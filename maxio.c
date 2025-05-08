@@ -36,6 +36,15 @@
 #define MAXIO_MAE0621A_LCR_LED1_LINK100		BIT(6)
 #define MAXIO_MAE0621A_LCR_LED1_LINK10		BIT(5)
 
+static int mae0621a_read_page(struct phy_device *phydev)
+{
+	return __phy_read(phydev, MAXIO_PAGE_SELECT);
+}
+
+static int mae0621a_write_page(struct phy_device *phydev, int page)
+{
+	return __phy_write(phydev, MAXIO_PAGE_SELECT, page);
+}
 
 static int maxio_read_paged(struct phy_device *phydev, int page, u32 regnum)
 {
@@ -179,7 +188,7 @@ static int maxio_mae0621a_config_init(struct phy_device *phydev)
 	struct device *dev = &phydev->mdio.dev;
 	int ret = 0;
 
-	dev_dbg(dev,"MAXIO_PHY_VER: %s \n",MAXIO_PHY_VER);
+	dev_dbg(dev, "MAXIO_PHY_VER: %s \n", MAXIO_PHY_VER);
 
 	/* mdc set */
 	ret = maxio_write_paged(phydev, 0xda0, 0x10, 0xf13 );
@@ -257,7 +266,7 @@ static int maxio_mae0621aq3ci_config_init(struct phy_device *phydev)
 	struct device *dev = &phydev->mdio.dev;
 	int ret = 0;
 
-	dev_dbg(dev,"MAXIO_PHY_VER: %s \n",MAXIO_PHY_VER);
+	dev_dbg(dev, "MAXIO_PHY_VER: %s \n", MAXIO_PHY_VER);
 
 	/* MDC set */
 	ret = maxio_write_paged(phydev, 0xdab, 0x17, 0xf13);
@@ -327,23 +336,29 @@ static struct phy_driver maxio_nc_drvs[] = {
 	{
 		.phy_id		= 0x7b744411,
 		.phy_id_mask	= 0x7fffffff,
-		.name       = "MAE0621A-Q2C Gigabit Ethernet",
+		.name		= "MAE0621A-Q2C Gigabit Ethernet",
 		.features	= PHY_GBIT_FEATURES,
-		.probe          = maxio_mae0621a_probe,
+		.probe		= maxio_mae0621a_probe,
 		.config_init	= maxio_mae0621a_config_init,
-		.config_aneg    = maxio_mae0621a_config_aneg,
-		.read_status    = maxio_mae0621a_status,
-		.suspend    = maxio_mae0621a_suspend,
-		.resume     = maxio_mae0621a_resume,
+		.config_aneg	= maxio_mae0621a_config_aneg,
+		.read_status	= maxio_mae0621a_status,
+		.suspend	= maxio_mae0621a_suspend,
+		.resume		= maxio_mae0621a_resume,
+		.read_page	= mae0621a_read_page,
+		.write_page	= mae0621a_write_page,
 	 },
 	 {
 		.phy_id		= 0x7b744412,
 		.phy_id_mask	= 0x7fffffff,
-		.name       = "MAE0621A/B-Q3C(I) Gigabit Ethernet",
+		.name		= "MAE0621A/B-Q3C(I) Gigabit Ethernet",
 		.features	= PHY_GBIT_FEATURES,
+//		.probe          = maxio_mae0621a_probe,
 		.config_init	= maxio_mae0621aq3ci_config_init,
-		.suspend    = maxio_mae0621aq3ci_suspend,
-		.resume     = maxio_mae0621aq3ci_resume,
+//		.config_aneg    = maxio_mae0621a_config_aneg,
+		.suspend	= maxio_mae0621aq3ci_suspend,
+		.resume		= maxio_mae0621aq3ci_resume,
+		.read_page	= mae0621a_read_page,
+		.write_page	= mae0621a_write_page,
 	 },
 };
 
