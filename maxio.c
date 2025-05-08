@@ -22,22 +22,22 @@
 #include <linux/timer.h>
 #include <linux/netdevice.h>
 
-#define MAXIO_PHY_VER 					"v1.7.6.1"
-#define MAXIO_PAGE_SELECT			    0x1f
-#define MAXIO_MAE0621A_CLK_MODE_REG      0x02
-#define MAXIO_MAE0621A_WORK_STATUS_REG   0x1d
+#define MAXIO_PHY_VER				"v1.7.6.1"
+#define MAXIO_PAGE_SELECT			0x1f
+#define MAXIO_MAE0621A_CLK_MODE_REG		0x02
+#define MAXIO_MAE0621A_WORK_STATUS_REG		0x1d
 
 #define MAXIO_MAE0621A_LCR_LED2_ACT		BIT(14)
 #define MAXIO_MAE0621A_LCR_LED2_LINK1000	BIT(13)
-#define MAXIO_MAE0621A_LCR_LED2_LINK100	BIT(11)
-#define MAXIO_MAE0621A_LCR_LED2_LINK10	BIT(10)
+#define MAXIO_MAE0621A_LCR_LED2_LINK100		BIT(11)
+#define MAXIO_MAE0621A_LCR_LED2_LINK10		BIT(10)
 #define MAXIO_MAE0621A_LCR_LED1_ACT		BIT(9)
 #define MAXIO_MAE0621A_LCR_LED1_LINK1000	BIT(8)
-#define MAXIO_MAE0621A_LCR_LED1_LINK100	BIT(6)
-#define MAXIO_MAE0621A_LCR_LED1_LINK10	BIT(5)
+#define MAXIO_MAE0621A_LCR_LED1_LINK100		BIT(6)
+#define MAXIO_MAE0621A_LCR_LED1_LINK10		BIT(5)
 
 
-int maxio_read_paged(struct phy_device *phydev, int page, u32 regnum)
+static int maxio_read_paged(struct phy_device *phydev, int page, u32 regnum)
 {
 	int ret = 0, oldpage;
 
@@ -51,8 +51,7 @@ int maxio_read_paged(struct phy_device *phydev, int page, u32 regnum)
 	return ret;
 }
 
-
-int maxio_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val)
+static int maxio_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val)
 {
 	int ret = 0, oldpage;
 
@@ -76,26 +75,26 @@ static int maxio_mae0621a_clk_init(struct phy_device *phydev)
 		oldpage = phy_read(phydev, MAXIO_PAGE_SELECT);
 	}
 
-	//soft reset
+	/* soft reset */
 	phy_write(phydev, MAXIO_PAGE_SELECT, 0x0);
 	phy_write(phydev, MII_BMCR, 0x9140);
 
-	//get workmode
+	/* get workmode */
 	phy_write(phydev, MAXIO_PAGE_SELECT, 0xa43);
 	workmode = phy_read(phydev, MAXIO_MAE0621A_WORK_STATUS_REG);
 
-	//get clkmode
+	/* get clkmode */
 	phy_write( phydev, MAXIO_PAGE_SELECT, 0xd92 );
 	clkmode = phy_read( phydev, MAXIO_MAE0621A_CLK_MODE_REG );
 
-	//abnormal
+	/* abnormal */
 	if (0 == (workmode&BIT(5))) {
 		if (0 == (clkmode&BIT(8))) {
-			//oscillator
+			/* oscillator */
 			phy_write(phydev, 0x02, clkmode | BIT(8));
 			dev_dbg(dev,"****maxio_mae0621a_clk_init**clkmode**0x210a: 0x%x\n", phydev->phy_id);
 		} else {
-			//crystal
+			/* crystal */
 			dev_dbg(dev,"****maxio_mae0621a_clk_init**clkmode**0x200a: 0x%x\n", phydev->phy_id);
 			phy_write(phydev, 0x02, clkmode &(~ BIT(8)));
 		}
@@ -115,7 +114,7 @@ static int maxio_read_mmd(struct phy_device *phydev, int devnum, u16 regnum)
 	int ret = 0, oldpage;
 	oldpage = phy_read(phydev, MAXIO_PAGE_SELECT);
 
-	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) {// eee info
+	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) { /* eee info */
 		phy_write(phydev, MAXIO_PAGE_SELECT ,0);
 		phy_write(phydev, 0xd, MDIO_MMD_AN);
 		phy_write(phydev, 0xe, MDIO_AN_EEE_ADV);
@@ -134,7 +133,7 @@ static int maxio_write_mmd(struct phy_device *phydev, int devnum, u16 regnum, u1
 	int ret = 0, oldpage;
 	oldpage = phy_read(phydev, MAXIO_PAGE_SELECT);
 
-	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) { // eee info
+	if (devnum == MDIO_MMD_AN && regnum == MDIO_AN_EEE_ADV) { /* eee info */
 		phy_write(phydev, MAXIO_PAGE_SELECT ,0);
 		ret |= phy_write(phydev, 0xd, MDIO_MMD_AN);
 		ret |= phy_write(phydev, 0xe, MDIO_AN_EEE_ADV);
@@ -151,8 +150,7 @@ static int maxio_write_mmd(struct phy_device *phydev, int devnum, u16 regnum, u1
 	return ret;
 }
 
-
-int maxio_adcc_check(struct phy_device *phydev)
+static int maxio_adcc_check(struct phy_device *phydev)
 {
 	int ret = 0;
 	int adcvalue;
@@ -181,8 +179,7 @@ int maxio_adcc_check(struct phy_device *phydev)
 	return ret;
 }
 
-
-int maxio_self_check(struct phy_device *phydev,int checknum)
+static int maxio_self_check(struct phy_device *phydev,int checknum)
 {
 	struct device *dev = &phydev->mdio.dev;
 	int ret = 0;
@@ -212,6 +209,7 @@ int maxio_self_check(struct phy_device *phydev,int checknum)
 
 	return ret;
 }
+
 static int maxio_mae0621a_config_aneg(struct phy_device *phydev)
 {
 	return genphy_config_aneg(phydev);
@@ -225,13 +223,12 @@ static int maxio_mae0621a_config_init(struct phy_device *phydev)
 
 	dev_dbg(dev,"MAXIO_PHY_VER: %s \n",MAXIO_PHY_VER);
 
-	//mdc set
+	/* mdc set */
 	ret = maxio_write_paged(phydev, 0xda0, 0x10, 0xf13 );
 
 	maxio_mae0621a_clk_init(phydev);
 
-
-	//disable eee
+	/* disable eee */
 	dev_dbg(dev,"eee value: 0x%x \n",maxio_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_EEE_ADV));
 	maxio_write_mmd(phydev, MDIO_MMD_AN, MDIO_AN_EEE_ADV, 0);
 	dev_dbg(dev,"eee value: 0x%x \n",maxio_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_EEE_ADV));
@@ -239,10 +236,10 @@ static int maxio_mae0621a_config_init(struct phy_device *phydev)
 	broken |= MDIO_EEE_1000T;
 	phydev->eee_broken_modes = broken;
 
-	//enable auto_speed_down
+	/* enable auto_speed_down */
 	ret |= maxio_write_paged(phydev, 0xd8f, 0x0, 0x300 );
 
-	//adjust ANE
+	/* adjust ANE */
 	ret |= maxio_write_paged(phydev, 0xd90, 0x2, 0x1555);
 	ret |= maxio_write_paged(phydev, 0xd90, 0x5, 0x2b15);
 	ret |= maxio_write_paged(phydev, 0xd96, 0x13, 0x7bc );
@@ -250,7 +247,7 @@ static int maxio_mae0621a_config_init(struct phy_device *phydev)
 	ret |= maxio_write_paged(phydev, 0xd91, 0x6, 0x6880 );
 	ret |= maxio_write_paged(phydev, 0xd92, 0x14, 0xa);
 	ret |= maxio_write_paged(phydev, 0xd91, 0x7, 0x5b00);
-	//clkout 125MHZ
+	/* clkout 125MHZ */
 	ret |= maxio_write_paged(phydev, 0xa43, 0x19, 0x823);
 
 	phy_write(phydev, MAXIO_PAGE_SELECT, 0x0);
@@ -274,7 +271,7 @@ static int maxio_mae0621a_config_init(struct phy_device *phydev)
 static int maxio_mae0621a_resume(struct phy_device *phydev)
 {
 	int ret = genphy_resume(phydev);
-	//soft reset
+	/* soft reset */
 	ret |= phy_write(phydev, MII_BMCR, BMCR_RESET | phy_read(phydev, MII_BMCR));
 	msleep(5);
 
@@ -284,7 +281,7 @@ static int maxio_mae0621a_resume(struct phy_device *phydev)
 static int maxio_mae0621a_suspend(struct phy_device *phydev)
 {
 	int ret = genphy_suspend(phydev);
-	//back to 0 page
+	/* back to 0 page */
 	ret |= phy_write(phydev, MAXIO_PAGE_SELECT ,0);
 
 	return ret;
@@ -309,13 +306,13 @@ static int maxio_mae0621aq3ci_config_init(struct phy_device *phydev)
 
 	dev_dbg(dev,"MAXIO_PHY_VER: %s \n",MAXIO_PHY_VER);
 
-	//MDC set
+	/* MDC set */
 	ret = maxio_write_paged(phydev, 0xdab, 0x17, 0xf13);
 
-	//auto speed down enable
+	/* auto speed down enable */
 	ret |= maxio_write_paged(phydev, 0xd8f, 0x10, 0x300);
 
-	//adjust ANE
+	/* adjust ANE */
 	ret |= maxio_write_paged(phydev, 0xd96, 0x15, 0xc08a);
 	ret |= maxio_write_paged(phydev, 0xda4, 0x12, 0x7bc);
 	ret |= maxio_write_paged(phydev, 0xd8f, 0x16, 0x2500);
@@ -330,14 +327,13 @@ static int maxio_mae0621aq3ci_config_init(struct phy_device *phydev)
 	ret |= maxio_write_paged(phydev, 0xd99, 0x16, 0xa);
 	ret |= maxio_write_paged(phydev, 0xd95, 0x13, 0x5b00);
 
-
-	//clkout 125MHZ
+	/* clkout 125MHZ */
 	ret |= maxio_write_paged(phydev, 0xa43, 0x19, 0x823);
 
-	//soft reset
+	/* soft reset */
 	ret |= maxio_write_paged(phydev, 0x0, 0x0, 0x9140);
 
-	//back to 0 page
+	/* back to 0 page */
 	ret |= phy_write(phydev, MAXIO_PAGE_SELECT, 0);
 
 	ret |= maxio_write_paged(phydev, 0xd04, 0x10, (MAXIO_MAE0621A_LCR_LED2_ACT|MAXIO_MAE0621A_LCR_LED2_LINK1000|MAXIO_MAE0621A_LCR_LED1_LINK1000|MAXIO_MAE0621A_LCR_LED1_LINK100|MAXIO_MAE0621A_LCR_LED1_LINK10));
@@ -351,7 +347,8 @@ static int maxio_mae0621aq3ci_resume(struct phy_device *phydev)
 
 	ret = genphy_resume(phydev);
 	ret |= maxio_write_paged(phydev, 0xdaa, 0x17, 0x1001 );
-	//led set
+
+	/* led set */
 	ret |= maxio_write_paged(phydev, 0xdab, 0x15, 0x0 );
 	ret |= phy_write(phydev, MAXIO_PAGE_SELECT, 0);
 
@@ -363,7 +360,8 @@ static int maxio_mae0621aq3ci_suspend(struct phy_device *phydev)
 	int ret = 0;
 
 	ret = maxio_write_paged(phydev, 0xdaa, 0x17, 0x1011 );
-	//led set
+
+	/* led set */
 	ret |= maxio_write_paged(phydev, 0xdab, 0x15, 0x5550 );
 	ret |= phy_write(phydev, MAXIO_PAGE_SELECT, 0);
 	ret |= genphy_suspend(phydev);
@@ -404,7 +402,6 @@ static struct mdio_device_id __maybe_unused maxio_nc_tbl[] = {
 };
 
 MODULE_DEVICE_TABLE(mdio, maxio_nc_tbl);
-
 
 MODULE_DESCRIPTION("Maxio PHY driver");
 MODULE_AUTHOR("Zhao Yang");
